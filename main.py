@@ -15,10 +15,10 @@ def call_sql_blobs():
         #parsed deserialed data => eval(target_blob[0])
         ma_query = f"INSERT into echo_events_deserial values ({i[0]},{i[1]},{i[2]},{i[3]},{t})"
         db_handle.execute_sql(ma_query)
-        db_handle.conn.commit()
+    db_handle.conn.commit()
     db_handle.conn.close()
 
 if __name__ == '__main__':
     print("echo deseeializer")
-    # call_sql_blobs()
+    call_sql_blobs()
 

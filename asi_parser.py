@@ -8,14 +8,22 @@ import json
 
 # echo db
 def echo_db_handler():
-    db_handle = db_handler('./target/echo_db_24-02-20')
+    db_handle = db_handler('./target/echo_db_24-02-201')
+    db_handle.execute_sql_commit("DROP TABLE IF EXISTS `echo_events_deserial`")
+    db_handle.execute_sql_commit("CREATE TABLE IF NOT EXISTS `echo_events_deserial` (`event_id` INTEGER PRIMARY KEY "
+                                 "AUTOINCREMENT NOT NULL, `entity_type` INTEGER NOT NULL, `entity_version` INTEGER "
+                                 "NOT NULL, `trigger_time` INTEGER NOT NULL, `blob_deserial` BLOB NOT NULL, `entity_type_de` TEXT NOT NULL)")
+
     datas = db_handle.execute_sql("select * from echo_events;").fetchall()
+
     for i in datas:
         target_blob = blackboxprotobuf.protobuf_to_json(i[4])
         protobuf_dict = dict(json.loads(target_blob[0]))  # eval(target_blob[0])
         update_dict = dict()
-
-        if i[1] == enum_specs.echo_db.APP_TARGET.value:
+        action_category_type = i[1]
+        t2 = ""
+        if action_category_type == enum_specs.echo_db.APP_TARGET.value:
+            t2 = enum_specs.echo_db.APP_TARGET.name
             for key in protobuf_dict.keys():
                 update_value = protobuf_dict[key]
                 if key == echo_db_protobuf_APP_TARGET_protobuf.ACTION_TYPE.value:
@@ -32,7 +40,8 @@ def echo_db_handler():
                     update_value = update_dict_ECHO_TARGET
                 update_key = echo_db_protobuf_APP_TARGET_protobuf(key).name
                 update_dict[update_key] = update_value
-        if i[1] == enum_specs.echo_db.CONTEXT_AUDIO_DEVICE.value:
+        if action_category_type == enum_specs.echo_db.CONTEXT_AUDIO_DEVICE.value:
+            t2 = enum_specs.echo_db.CONTEXT_AUDIO_DEVICE.name
             for key in protobuf_dict.keys():
                 update_key = echo_db_protobuf_CONTEXT_AUDIO_DEVICE(key).name
                 update_value = protobuf_dict[key]
@@ -41,7 +50,8 @@ def echo_db_handler():
                     if int(protobuf_dict[key]) == 1:
                         update_value = "PLUGGGED IN"
                 update_dict[update_key] = update_value
-        if i[1] == enum_specs.echo_db.SHARE_SHEET.value:
+        if action_category_type == enum_specs.echo_db.SHARE_SHEET.value:
+            t2 = enum_specs.echo_db.SHARE_SHEET.name
             for key in protobuf_dict.keys():
                 update_key = key
                 update_value = protobuf_dict[key]
@@ -57,14 +67,16 @@ def echo_db_handler():
                             update_key1 = echo_db_protobuf_SHARE_SHEET_IMAGE_PATH(key1).name
                         image_path_dict[update_key1] = update_value1
                     update_dict = image_path_dict
-        if i[1] == enum_specs.echo_db.SCREENSHOT.value:
+        if action_category_type == enum_specs.echo_db.SCREENSHOT.value:
+            t2 = enum_specs.echo_db.SCREENSHOT.name
             for key in protobuf_dict.keys():
                 update_key = key
                 update_value = protobuf_dict[key]
                 if int(echo_db_protobuf_SCREEN_SHOT(key).value) > 0:
                     update_key = echo_db_protobuf_SCREEN_SHOT(key).name
                 update_dict[update_key] = update_value
-        if i[1] == enum_specs.echo_db.SEARCH.value:
+        if action_category_type == enum_specs.echo_db.SEARCH.value:
+            t2 = enum_specs.echo_db.SEARCH.name
             for key in protobuf_dict.keys():
                 update_key = key
                 update_value = protobuf_dict[key]
@@ -72,14 +84,16 @@ def echo_db_handler():
                     update_key = echo_db_protobuf_SEARCH(key).name
                 update_dict[update_key] = update_value
             print(update_dict)
-        if i[1] == enum_specs.echo_db.SMARTSPACE.value:
+        if action_category_type == enum_specs.echo_db.SMARTSPACE.value:
+            t2 = enum_specs.echo_db.SMARTSPACE.name
             for key in protobuf_dict.keys():
                 update_key = key
                 update_value = protobuf_dict[key]
                 if int(echo_db_protobuf_SMART_SPACE(key).value) > 0:
                     update_key = echo_db_protobuf_SMART_SPACE(key).name
                 update_dict[update_key] = update_value
-        if i[1] == enum_specs.echo_db.NOTIFICATION.value:
+        if action_category_type == enum_specs.echo_db.NOTIFICATION.value:
+            t2 = enum_specs.echo_db.NOTIFICATION.name
             for key in protobuf_dict.keys():
                 update_key = key
                 update_value = protobuf_dict[key]
@@ -99,22 +113,37 @@ def echo_db_handler():
                     update_value = new_value_dict
 
                 update_dict[update_key] = update_value
-        print(update_dict)
+        t = "'" + json.dumps(update_dict) + "'"
+        t2 = "'" + t2 + "'"
+        ma_query = f"INSERT into echo_events_deserial values ({i[0]},{i[1]},{i[2]},{i[3]},{t},{t2})"
+        db_handle.execute_sql(ma_query)
+
+    db_handle.conn.commit()
     db_handle.conn.close()
 
 
 # active users logger
 def active_users_logger_handler():
     db_handle = db_handler('./target/active_users_logger.db')
+    db_handle.execute_sql_commit("DROP TABLE IF EXISTS `active_users_logger_de`")
+    db_handle.execute_sql_commit(
+        "CREATE TABLE active_users_logger_de (id INTEGER PRIMARY KEY AUTOINCREMENT,feature_id INTEGER NOT NULL,feature_event_type TEXT,feature_date TEXT,timestamp INTEGER, actions TEXT)")
     datas = db_handle.execute_sql("select * from active_users_logger where feature_event_type = 'USED';").fetchall()
     for i in datas:
-        print(i[0], enum_specs.active_users_logger(i[1]).name, i[2], i[3], i[4])
+        ma_query = f"INSERT into active_users_logger_de values ({i[0]},{i[1]},'{i[2]}','{i[3]}',{i[4]},'{enum_specs.active_users_logger(i[1]).name}')"
+        db_handle.execute_sql(ma_query)
+
+    db_handle.conn.commit()
     db_handle.conn.close()
 
 
 # a13~
 def people_search_handler():
     db_handle = db_handler('./target/people_search')
+    db_handle.execute_sql_commit("DROP TABLE IF EXISTS `search_index_deserial`")
+    db_handle.execute_sql_commit(
+        "CREATE TABLE `search_index_deserial` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `entity_id` INTEGER, `entity_type` INTEGER NOT NULL, `store_id_de` BLOB)")
+
     datas = db_handle.execute_sql("select * from search_index where entity_type == 1;").fetchall()
     for i in datas:
         target_blob = blackboxprotobuf.protobuf_to_json(i[4])
@@ -138,38 +167,88 @@ def people_search_handler():
                 update_value = update_value1
             update_dict[update_key] = update_value
         print(update_dict)
-        print(protobuf_dict)
 
+        t = "'" + json.dumps(update_dict) + "'"
+
+        ma_query = f"INSERT into search_index_deserial values ({i[0]},'{i[1]}',{i[2]},{i[3]},{t})"
+        if type(i[2]) == type(None):
+            ma_query = f"INSERT into search_index_deserial values ({i[0]},'{i[1]}',Null,{i[3]},{t})"
+
+        print(type(i[2]), ma_query)
+        db_handle.execute_sql(ma_query)
+
+    db_handle.conn.commit()
     db_handle.conn.close()
 
 
 def simple_storage_now_playing_recognition_handler():
     db_handle = db_handler('./target/SimpleStorage')
     datas = db_handle.execute_sql("select * from NowPlayingRecognitionEvents;").fetchall()
+
+    db_handle.execute_sql_commit("DROP TABLE IF EXISTS `NowPlayingRecognitionEvents_dec`")
+    db_handle.execute_sql_commit("CREATE TABLE `NowPlayingRecognitionEvents_dec` (`id` INTEGER PRIMARY KEY "
+                                 "AUTOINCREMENT NOT NULL, `timestampMillis` INTEGER NOT NULL, `countryCode` TEXT NOT "
+                                 "NULL, `shardVersion` INTEGER NOT NULL, `shardCountry` TEXT NOT NULL, `packageName` "
+                                 "TEXT NOT NULL, `systemInfoId` INTEGER, `recognitionResult` INTEGER NOT NULL, "
+                                 "`recognitionTrigger` INTEGER NOT NULL, `detectedMusicScore` REAL NOT NULL, "
+                                 "`comparisonToLastMatch` INTEGER NOT NULL, `recognitionResult_dec` TEXT , `recognitionTrigger_dec` TEXT , FOREIGN KEY(`packageName`) REFERENCES "
+                                 "`Packages`(`packageName`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY("
+                                 "`systemInfoId`) REFERENCES `SystemInfo`(`id`) ON UPDATE CASCADE ON DELETE SET NULL)")
+
     for i in datas:
         print(simple_storage_nowplayingrecognition_recognition_result(i[7]).name,
               simple_storage_nowplayingrecognition_recognition_trigger(i[8]).name)
+        ma_query = f"INSERT into NowPlayingRecognitionEvents_dec values ({i[0]},{i[1]},'{i[2]}',{i[3]},'{i[4]}','{i[5]}',{i[6]},{i[7]},{i[8]},{i[9]},{i[10]},'{simple_storage_nowplayingrecognition_recognition_result(i[7]).name}','{simple_storage_nowplayingrecognition_recognition_trigger(i[8]).name}')"
+        db_handle.execute_sql(ma_query)
+
+    db_handle.conn.commit()
     db_handle.conn.close()
 
 
 def portable_geller_personalized_habits_handler():
-    db_handle = db_handler('./target/portable_geller_personalized.db')
+    db_handle = db_handler('./target/portable_geller_personalized_media_trans.db')
+
+    db_handle.execute_sql_commit("DROP TABLE IF EXISTS `geller_data_deserial`")
+    db_handle.execute_sql_commit(
+        "CREATE TABLE geller_data_deserial (data_type TEXT NOT NULL, key TEXT NOT NULL, timestamp_micro INTEGER NOT "
+        "NULL, sync_status TEXT, delete_status TEXT, num_times_used INTEGER, deletion_sync_status TEXT, "
+        "data_id INTEGER NOT NULL, data_deserial BLOB ,  FOREIGN KEY (data_id) REFERENCES geller_data_table (_id) ON "
+        "DELETE CASCADE )")
+
     datas = db_handle.execute_sql(
         "select * from geller_key_table, geller_data_table where geller_key_table.data_id = geller_data_table._id and "
-        "data_type = 'HABITS_AA_PROFILES' and key like '%PROFILE%';").fetchall()
+        "data_type = 'HABITS_AA_PROFILES';").fetchall()
+
     for i in datas:
         if not any(ss in i[1] for ss in ['MEDIA', 'SHOPPING', 'TRANSPORTATION']):
             continue
         target_blob = blackboxprotobuf.protobuf_to_json(i[9])
         protobuf_dict = dict(json.loads(target_blob[0]))  # eval(target_blob[0])
+        update_val = "no data defined"
         try:
             if 'MEDIA' in i[1]:
-                print(protobuf_dict['3']['2']['311287627']['4'])
+                 update_val = protobuf_dict['3']['2']['311287627']['4']
             if 'SHOPPING' in i[1]:
-                print(protobuf_dict['3']['2']['338436589']['5'])
+                update_val = protobuf_dict['3']['2']['338436589']['5']
+            if 'TRANSPORTATION' in i[1]:
+                update_val = protobuf_dict['3']['2']['479335935']['1']
         except:
-            print("no data defined")
+            print(update_val)
+        print(update_val)
+        flag1 = i[4]
+        flag2 = i[6]
+        if type(i[4]) == type(None):
+            flag1 = "Null"
+        if type(i[6]) == type(None):
+            flag2 = "Null"
 
+        ma_query = f"INSERT into geller_data_deserial values ('{i[0]}','{i[1]}',{i[2]},'{i[3]}','{flag1}',{i[5]},'{flag2}',{i[7]},'{json.dumps(update_val)}')"
+        db_handle.execute_sql(ma_query)
+
+
+
+
+    db_handle.conn.commit()
     db_handle.conn.close()
 
 
@@ -180,20 +259,20 @@ if __name__ == '__main__':
     # simple_storage_now_playing_recognition_handler()
     portable_geller_personalized_habits_handler()
 
-# aiai matchmaker_fa_db
+# aiai matchmaker_fa_db --> already done no nothing to do
 
-# autofill
+# autofill --> already done no nothing to do
 
-# active_users_logger.db
+# active_users_logger.db v
 
-# people_search
+# people_search v
 
-# nasa_ps_db
+# nasa_ps_db --> already done no nothing to do
 
-# cell_db
+# cell_db --> already done no nothing to do
 
-# portable_geller_personalized.db
+# portable_geller_personalized.db v
 
-# simplestorage
+# simplestorage v
 
-# historyDB
+# historyDB --> already done no nothing to do
