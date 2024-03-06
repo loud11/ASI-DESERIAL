@@ -1,6 +1,8 @@
 from enum import Enum
 
 
+ASI_DATA_LIST = ['echo_db','active_users_logger.db', 'people_search', 'SimpleStorage', 'portable_geller_personalized.db', 'aiai_matchmaker_fa_db']
+
 # a11
 class aiai_matchmaker_fa_db(Enum):
     NOT_DEFINED = -1

@@ -1,3 +1,5 @@
+import sys
+
 import enum_specs
 from enum_specs import *
 from db_handler import *
@@ -7,12 +9,13 @@ import json
 
 
 # echo db
-def echo_db_handler():
-    db_handle = db_handler('./target/echo_db_24-02-201')
+def echo_db_handler(data_path):
+    db_handle = db_handler(data_path)
     db_handle.execute_sql_commit("DROP TABLE IF EXISTS `echo_events_deserial`")
     db_handle.execute_sql_commit("CREATE TABLE IF NOT EXISTS `echo_events_deserial` (`event_id` INTEGER PRIMARY KEY "
                                  "AUTOINCREMENT NOT NULL, `entity_type` INTEGER NOT NULL, `entity_version` INTEGER "
-                                 "NOT NULL, `trigger_time` INTEGER NOT NULL, `blob_deserial` BLOB NOT NULL, `entity_type_de` TEXT NOT NULL)")
+                                 "NOT NULL, `trigger_time` INTEGER NOT NULL, `blob_deserial` BLOB NOT NULL, "
+                                 "`entity_type_de` TEXT NOT NULL)")
 
     datas = db_handle.execute_sql("select * from echo_events;").fetchall()
 
@@ -32,7 +35,9 @@ def echo_db_handler():
                     update_value = echo_db_APP_TARGET_LAUNCH_LOCATION(protobuf_dict[key]).name
                 if key == echo_db_protobuf_APP_TARGET_protobuf.ECHO_TARGET.value:
                     update_dict_ECHO_TARGET = dict()
+
                     for key1 in protobuf_dict[key].keys():
+
                         update_key1 = key1
                         if int(echo_db_protobuf_APP_TARGET_ECHO_TARGET(key1).value) > 0:
                             update_key1 = echo_db_protobuf_APP_TARGET_ECHO_TARGET(key1).name
@@ -83,7 +88,6 @@ def echo_db_handler():
                 if int(echo_db_protobuf_SEARCH(key).value) > 0:
                     update_key = echo_db_protobuf_SEARCH(key).name
                 update_dict[update_key] = update_value
-            print(update_dict)
         if action_category_type == enum_specs.echo_db.SMARTSPACE.value:
             t2 = enum_specs.echo_db.SMARTSPACE.name
             for key in protobuf_dict.keys():
@@ -113,18 +117,21 @@ def echo_db_handler():
                     update_value = new_value_dict
 
                 update_dict[update_key] = update_value
+
         t = "'" + json.dumps(update_dict) + "'"
         t2 = "'" + t2 + "'"
         ma_query = f"INSERT into echo_events_deserial values ({i[0]},{i[1]},{i[2]},{i[3]},{t},{t2})"
+
         db_handle.execute_sql(ma_query)
 
     db_handle.conn.commit()
     db_handle.conn.close()
+    print(f"{data_path} deserial or decode done!")
 
 
 # active users logger
-def active_users_logger_handler():
-    db_handle = db_handler('./target/active_users_logger.db')
+def active_users_logger_handler(data_path):
+    db_handle = db_handler(data_path)
     db_handle.execute_sql_commit("DROP TABLE IF EXISTS `active_users_logger_de`")
     db_handle.execute_sql_commit(
         "CREATE TABLE active_users_logger_de (id INTEGER PRIMARY KEY AUTOINCREMENT,feature_id INTEGER NOT NULL,feature_event_type TEXT,feature_date TEXT,timestamp INTEGER, actions TEXT)")
@@ -135,11 +142,12 @@ def active_users_logger_handler():
 
     db_handle.conn.commit()
     db_handle.conn.close()
+    print(f"{data_path} deserial or decode done!")
 
 
 # a13~
-def people_search_handler():
-    db_handle = db_handler('./target/people_search')
+def people_search_handler(data_path):
+    db_handle = db_handler(data_path)
     db_handle.execute_sql_commit("DROP TABLE IF EXISTS `search_index_deserial`")
     db_handle.execute_sql_commit(
         "CREATE TABLE `search_index_deserial` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `entity_id` INTEGER, `entity_type` INTEGER NOT NULL, `store_id_de` BLOB)")
@@ -166,23 +174,21 @@ def people_search_handler():
                     update_value1[update_key1] = update_value2
                 update_value = update_value1
             update_dict[update_key] = update_value
-        print(update_dict)
 
         t = "'" + json.dumps(update_dict) + "'"
 
         ma_query = f"INSERT into search_index_deserial values ({i[0]},'{i[1]}',{i[2]},{i[3]},{t})"
         if type(i[2]) == type(None):
             ma_query = f"INSERT into search_index_deserial values ({i[0]},'{i[1]}',Null,{i[3]},{t})"
-
-        print(type(i[2]), ma_query)
         db_handle.execute_sql(ma_query)
 
     db_handle.conn.commit()
     db_handle.conn.close()
+    print(f"{data_path} deserial or decode done!")
 
 
-def simple_storage_now_playing_recognition_handler():
-    db_handle = db_handler('./target/SimpleStorage')
+def simple_storage_now_playing_recognition_handler(data_path):
+    db_handle = db_handler(data_path)
     datas = db_handle.execute_sql("select * from NowPlayingRecognitionEvents;").fetchall()
 
     db_handle.execute_sql_commit("DROP TABLE IF EXISTS `NowPlayingRecognitionEvents_dec`")
@@ -196,17 +202,16 @@ def simple_storage_now_playing_recognition_handler():
                                  "`systemInfoId`) REFERENCES `SystemInfo`(`id`) ON UPDATE CASCADE ON DELETE SET NULL)")
 
     for i in datas:
-        print(simple_storage_nowplayingrecognition_recognition_result(i[7]).name,
-              simple_storage_nowplayingrecognition_recognition_trigger(i[8]).name)
         ma_query = f"INSERT into NowPlayingRecognitionEvents_dec values ({i[0]},{i[1]},'{i[2]}',{i[3]},'{i[4]}','{i[5]}',{i[6]},{i[7]},{i[8]},{i[9]},{i[10]},'{simple_storage_nowplayingrecognition_recognition_result(i[7]).name}','{simple_storage_nowplayingrecognition_recognition_trigger(i[8]).name}')"
         db_handle.execute_sql(ma_query)
 
     db_handle.conn.commit()
     db_handle.conn.close()
+    print(f"{data_path} deserial or decode done!")
 
 
-def portable_geller_personalized_habits_handler():
-    db_handle = db_handler('./target/portable_geller_personalized_media_trans.db')
+def portable_geller_personalized_habits_handler(data_path):
+    db_handle = db_handler(data_path)
 
     db_handle.execute_sql_commit("DROP TABLE IF EXISTS `geller_data_deserial`")
     db_handle.execute_sql_commit(
@@ -233,8 +238,7 @@ def portable_geller_personalized_habits_handler():
             if 'TRANSPORTATION' in i[1]:
                 update_val = protobuf_dict['3']['2']['479335935']['1']
         except:
-            print(update_val)
-        print(update_val)
+            continue
         flag1 = i[4]
         flag2 = i[6]
         if type(i[4]) == type(None):
@@ -244,20 +248,41 @@ def portable_geller_personalized_habits_handler():
 
         ma_query = f"INSERT into geller_data_deserial values ('{i[0]}','{i[1]}',{i[2]},'{i[3]}','{flag1}',{i[5]},'{flag2}',{i[7]},'{json.dumps(update_val)}')"
         db_handle.execute_sql(ma_query)
-
-
-
-
     db_handle.conn.commit()
     db_handle.conn.close()
+    print(f"{data_path} deserial or decode done!")
 
 
 if __name__ == '__main__':
-    # echo_db_handler()
-    # active_users_logger_handler()
-    # people_search_handler()
-    # simple_storage_now_playing_recognition_handler()
-    portable_geller_personalized_habits_handler()
+
+    if len(sys.argv) < 2:
+        print("usage : python asi_parser.py DATA_PATH")
+        exit(-1)
+
+    abs_path = os.path.abspath(sys.argv[1])
+    for file_name in os.listdir(abs_path):
+        if file_name in enum_specs.ASI_DATA_LIST:
+            target_path = os.path.join(abs_path, file_name)
+            print(f"{file_name} detected! trying to deserial or decode....")
+            if file_name == enum_specs.ASI_DATA_LIST[0]:
+                echo_db_handler(target_path)
+                continue
+            if file_name == enum_specs.ASI_DATA_LIST[1]:
+                active_users_logger_handler(target_path)
+                continue
+            if file_name == enum_specs.ASI_DATA_LIST[2]:
+                people_search_handler(target_path)
+                continue
+            if file_name == enum_specs.ASI_DATA_LIST[3]:
+                simple_storage_now_playing_recognition_handler(target_path)
+                continue
+            if file_name == enum_specs.ASI_DATA_LIST[4]:
+                portable_geller_personalized_habits_handler(target_path)
+                continue
+
+
+    print("-----ASI deserial or decoding done!-----")
+
 
 # aiai matchmaker_fa_db --> already done no nothing to do
 
