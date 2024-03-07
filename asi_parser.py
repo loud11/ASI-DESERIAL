@@ -148,35 +148,63 @@ def active_users_logger_handler(data_path):
 # a13~
 def people_search_handler(data_path):
     db_handle = db_handler(data_path)
+
+    check_people_version = "select sql from sqlite_master where name = 'search_index';"
+    version_str = db_handle.execute_sql(check_people_version).fetchall()[0][0]
+
+    version_flag = 12
+
+    search_query = "select i.id, i.name, i.entity_id, i.entity_type, e.blob from search_index as i, search_entity " \
+                       "as e where e.id = i.entity_id and e.type = 1 "
+
+    if "store_id" in version_str:  # this means a13 version up
+        search_query = "select * from search_index where entity_type == 1;"
+        version_flag = 13
+
     db_handle.execute_sql_commit("DROP TABLE IF EXISTS `search_index_deserial`")
     db_handle.execute_sql_commit(
-        "CREATE TABLE `search_index_deserial` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `entity_id` INTEGER, `entity_type` INTEGER NOT NULL, `store_id_de` BLOB)")
+        "CREATE TABLE `search_index_deserial` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, "
+        "`entity_id` INTEGER, `entity_type` INTEGER NOT NULL, `store_id_de` BLOB)")
 
-    datas = db_handle.execute_sql("select * from search_index where entity_type == 1;").fetchall()
+    datas = db_handle.execute_sql(search_query).fetchall()
     for i in datas:
         target_blob = blackboxprotobuf.protobuf_to_json(i[4])
-        protobuf_dict = dict(json.loads(target_blob[0]))  # eval(target_blob[0])
+        protobuf_dict = dict(json.loads(target_blob[0]))
         update_dict = dict()
 
-        for key in protobuf_dict.keys():
-            update_key = key
-            update_value = protobuf_dict[key]
-            if key == enum_specs.people_search.SOURCES.value:
-                update_key = enum_specs.people_search.SOURCES.name
-                update_value1 = dict()
-                for key1 in protobuf_dict[key].keys():
-                    update_key1 = key1
-                    update_value2 = protobuf_dict[key][key1]
-                    if update_key1 == enum_specs.people_search_SOURCES.PACKAGE_NAME.value:
-                        update_key1 = enum_specs.people_search_SOURCES.PACKAGE_NAME.name
-                    if update_key1 == enum_specs.people_search_SOURCES.USER_IDENTIFIER.value:
-                        update_key1 = enum_specs.people_search_SOURCES.USER_IDENTIFIER.name
-                    update_value1[update_key1] = update_value2
-                update_value = update_value1
-            update_dict[update_key] = update_value
+        if version_flag == 12:
+            #a12
+            for key in protobuf_dict.keys():
+                update_key = key
+                update_value = protobuf_dict[key]
+                if update_key == enum_specs.people_search_a12.PACKAGE_NAME.value:
+                    update_key = enum_specs.people_search_a12.PACKAGE_NAME.name
+                if update_key == enum_specs.people_search_a12.USER_IDENTIFIER.value:
+                    update_key = enum_specs.people_search_a12.USER_IDENTIFIER.name
+                if update_key == enum_specs.people_search_a12.USER_NICKNAME.value:
+                    update_key = enum_specs.people_search_a12.USER_NICKNAME.name
+                update_dict[update_key] = update_value
+
+        if version_flag == 13:
+            # a13
+            for key in protobuf_dict.keys():
+                update_key = key
+                update_value = protobuf_dict[key]
+                if key == enum_specs.people_search.SOURCES.value:
+                    update_key = enum_specs.people_search.SOURCES.name
+                    update_value1 = dict()
+                    for key1 in protobuf_dict[key].keys():
+                        update_key1 = key1
+                        update_value2 = protobuf_dict[key][key1]
+                        if update_key1 == enum_specs.people_search_SOURCES.PACKAGE_NAME.value:
+                            update_key1 = enum_specs.people_search_SOURCES.PACKAGE_NAME.name
+                        if update_key1 == enum_specs.people_search_SOURCES.USER_IDENTIFIER.value:
+                            update_key1 = enum_specs.people_search_SOURCES.USER_IDENTIFIER.name
+                        update_value1[update_key1] = update_value2
+                    update_value = update_value1
+                update_dict[update_key] = update_value
 
         t = "'" + json.dumps(update_dict) + "'"
-
         ma_query = f"INSERT into search_index_deserial values ({i[0]},'{i[1]}',{i[2]},{i[3]},{t})"
         if type(i[2]) == type(None):
             ma_query = f"INSERT into search_index_deserial values ({i[0]},'{i[1]}',Null,{i[3]},{t})"
@@ -232,7 +260,7 @@ def portable_geller_personalized_habits_handler(data_path):
         update_val = "no data defined"
         try:
             if 'MEDIA' in i[1]:
-                 update_val = protobuf_dict['3']['2']['311287627']['4']
+                update_val = protobuf_dict['3']['2']['311287627']['4']
             if 'SHOPPING' in i[1]:
                 update_val = protobuf_dict['3']['2']['338436589']['5']
             if 'TRANSPORTATION' in i[1]:
@@ -280,24 +308,15 @@ if __name__ == '__main__':
                 portable_geller_personalized_habits_handler(target_path)
                 continue
 
-
     print("-----ASI deserial or decoding done!-----")
 
-
 # aiai matchmaker_fa_db --> already done no nothing to do
-
 # autofill --> already done no nothing to do
-
-# active_users_logger.db v
-
-# people_search v
-
 # nasa_ps_db --> already done no nothing to do
-
+# historyDB --> already done no nothing to do
 # cell_db --> already done no nothing to do
 
 # portable_geller_personalized.db v
-
+# active_users_logger.db v
+# people_search v
 # simplestorage v
-
-# historyDB --> already done no nothing to do

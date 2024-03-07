@@ -221,11 +221,24 @@ class active_users_logger(Enum):
         return cls.NOT_DEFINED
 
 
-# to be implemented --> todo : feature tag renew
+# (12754, 'jennifer', 854269542, 1, b'\n\x13com.groupme.android\x10\x00\x1a\x0897776964"\x08Jennifer(\x000\x008\x01') {'1': 'com.groupme.android', '2': '0', '3': '97776964', '4': 'Jennifer', '5': '0', '6': '0', '7': '1'}
+# (12755, 'GroupMe', 854269542, 1, b'\n\x13com.groupme.android\x10\x00\x1a\x0897776964"\x08Jennifer(\x000\x008\x01') {'1': 'com.groupme.android', '2': '0', '3': '97776964', '4': 'Jennifer', '5': '0', '6': '0', '7': '1'}
+class people_search_a12(Enum):
+    NOT_DEFINED = -1
+    PACKAGE_NAME = "1"
+    USER_IDENTIFIER = "3"
+    USER_NICKNAME = "4"
+    @classmethod
+    def _missing_(cls, value):
+        return cls.NOT_DEFINED
+
+
+
+
+
 class people_search(Enum):
     NOT_DEFINED = -1
     SOURCES = "2"
-
     @classmethod
     def _missing_(cls, value):
         return cls.NOT_DEFINED
