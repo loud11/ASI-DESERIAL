@@ -36,8 +36,6 @@ class echo_db(Enum):
     @classmethod
     def _missing_(cls, value):
         return cls.NOT_DEFINED
-
-
 class echo_db_APP_TARGET_LAUNCH_LOCATION(Enum):
     NOT_DEFINED = -1
     WORKSPACE = "1"  # execution of application of top of the main screen
@@ -56,8 +54,6 @@ class echo_db_APP_TARGET_LAUNCH_LOCATION(Enum):
     @classmethod
     def _missing_(cls, value):
         return cls.NOT_DEFINED
-
-
 class echo_db_APP_TARGET_ACTION_TYPE(Enum):
     NOT_DEFINED = -1
     ACTION_LAUNCH = "1"
@@ -69,8 +65,6 @@ class echo_db_APP_TARGET_ACTION_TYPE(Enum):
     @classmethod
     def _missing_(cls, value):
         return cls.NOT_DEFINED
-
-
 class echo_db_SMARTSPACE(Enum):
     NOT_DEFINED = -1
     DATE_CARD = "date_card"
@@ -81,8 +75,6 @@ class echo_db_SMARTSPACE(Enum):
     @classmethod
     def _missing_(cls, value):
         return cls.NOT_DEFINED
-
-
 class echo_db_protobuf_SMART_SPACE(Enum):
     NOT_DEFINED = -1
     EVENT_DEFINITION = "1"
@@ -95,8 +87,6 @@ class echo_db_protobuf_SMART_SPACE(Enum):
     @classmethod
     def _missing_(cls, value):
         return cls.NOT_DEFINED
-
-
 class echo_db_protobuf_SEARCH(Enum):
     NOT_DEFINED = -1
     QUERY = "1"
@@ -108,8 +98,6 @@ class echo_db_protobuf_SEARCH(Enum):
     @classmethod
     def _missing_(cls, value):
         return cls.NOT_DEFINED
-
-
 class echo_db_protobuf_NOTIFICATION(Enum):
     NOT_DEFINED = -1
     NOTIFI_TARGET = "1"  # "1" : package , "2": activity name
@@ -118,8 +106,6 @@ class echo_db_protobuf_NOTIFICATION(Enum):
     @classmethod
     def _missing_(cls, value):
         return cls.NOT_DEFINED
-
-
 class echo_db_protobuf_NOTIFICATION_NOTIFI_TARGET(Enum):
     NOT_DEFINED = -1
     PACKAGE_NAME = "1"
@@ -128,8 +114,6 @@ class echo_db_protobuf_NOTIFICATION_NOTIFI_TARGET(Enum):
     @classmethod
     def _missing_(cls, value):
         return cls.NOT_DEFINED
-
-
 class echo_db_protobuf_SHARE_SHEET(Enum):
     NOT_DEFINED = -1
     IMAGE_PATH = "1"
@@ -141,8 +125,6 @@ class echo_db_protobuf_SHARE_SHEET(Enum):
     @classmethod
     def _missing_(cls, value):
         return cls.NOT_DEFINED
-
-
 class echo_db_protobuf_SHARE_SHEET_IMAGE_PATH(Enum):
     NOT_DEFINED = -1
     IMAGE_PATH = "1"
@@ -151,8 +133,6 @@ class echo_db_protobuf_SHARE_SHEET_IMAGE_PATH(Enum):
     @classmethod
     def _missing_(cls, value):
         return cls.NOT_DEFINED
-
-
 class echo_db_protobuf_SCREEN_SHOT(Enum):
     NOT_DEFINED = -1
     IMAGE_PATH = "1"
@@ -162,8 +142,6 @@ class echo_db_protobuf_SCREEN_SHOT(Enum):
     @classmethod
     def _missing_(cls, value):
         return cls.NOT_DEFINED
-
-
 class echo_db_protobuf_CONTEXT_AUDIO_DEVICE(Enum):
     NOT_DEFINED = -1
     IS_PLUGGED_IN = "1"
@@ -173,8 +151,6 @@ class echo_db_protobuf_CONTEXT_AUDIO_DEVICE(Enum):
     @classmethod
     def _missing_(cls, value):
         return cls.NOT_DEFINED
-
-
 class echo_db_protobuf_APP_TARGET_protobuf(Enum):
     NOT_DEFINED = -1
     ACTION_TYPE = '1'
@@ -186,8 +162,6 @@ class echo_db_protobuf_APP_TARGET_protobuf(Enum):
     @classmethod
     def _missing_(cls, value):
         return cls.NOT_DEFINED
-
-
 class echo_db_protobuf_APP_TARGET_ECHO_TARGET(Enum):
     NOT_DEFINED = -1
     PACKAGE_NAME = '1'

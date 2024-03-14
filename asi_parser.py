@@ -8,7 +8,17 @@ import blackboxprotobuf
 import json
 
 
-# echo db
+def reflection_gel_handler(data_path):
+    db_handle = db_handler(data_path)
+    datas = db_handle.execute_sql("select * from reflection_event;").fetchall()
+
+    for i in datas:
+        target_blob = blackboxprotobuf.protobuf_to_json(i[6])
+        protobuf_dict = dict(json.loads(target_blob[0]))
+        update_dict = dict()
+        print(protobuf_dict.keys(), protobuf_dict)
+
+
 def echo_db_handler(data_path):
     db_handle = db_handler(data_path)
     db_handle.execute_sql_commit("DROP TABLE IF EXISTS `echo_events_deserial`")
@@ -129,7 +139,6 @@ def echo_db_handler(data_path):
     print(f"{data_path} deserial or decode done!")
 
 
-# active users logger
 def active_users_logger_handler(data_path):
     db_handle = db_handler(data_path)
     db_handle.execute_sql_commit("DROP TABLE IF EXISTS `active_users_logger_de`")
@@ -145,7 +154,6 @@ def active_users_logger_handler(data_path):
     print(f"{data_path} deserial or decode done!")
 
 
-# a13~
 def people_search_handler(data_path):
     db_handle = db_handler(data_path)
 
@@ -308,15 +316,6 @@ if __name__ == '__main__':
                 portable_geller_personalized_habits_handler(target_path)
                 continue
 
-    print("-----ASI deserial or decoding done!-----")
-
-# aiai matchmaker_fa_db --> already done no nothing to do
-# autofill --> already done no nothing to do
-# nasa_ps_db --> already done no nothing to do
-# historyDB --> already done no nothing to do
-# cell_db --> already done no nothing to do
-
-# portable_geller_personalized.db v
-# active_users_logger.db v
-# people_search v
-# simplestorage v
+    #ex. file_path = ".\reflection_gel_events.db"
+    # reflection_gel_handler(file_path)
+    # print("-----ASI deserial or decoding done!-----")
