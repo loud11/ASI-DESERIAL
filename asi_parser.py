@@ -6,6 +6,19 @@ from db_handler import *
 import os
 import blackboxprotobuf
 import json
+import datetime
+
+
+def time_stamp_stuff(ut) -> str:
+    target = ut
+    if type(target) == str:
+        target = int(ut)
+    if len(str(ut)) > 15:
+        target = ut / 1000000
+    elif len(str(ut)) > 13:
+        target = ut / 1000
+
+    return datetime.datetime.fromtimestamp(target).strftime('\'%Y-%m-%d %H:%M:%S\'')
 
 
 def reflection_gel_handler(data_path):
@@ -25,7 +38,7 @@ def echo_db_handler(data_path):
     db_handle.execute_sql_commit("CREATE TABLE IF NOT EXISTS `echo_events_deserial` (`event_id` INTEGER PRIMARY KEY "
                                  "AUTOINCREMENT NOT NULL, `entity_type` INTEGER NOT NULL, `entity_version` INTEGER "
                                  "NOT NULL, `trigger_time` INTEGER NOT NULL, `blob_deserial` BLOB NOT NULL, "
-                                 "`entity_type_de` TEXT NOT NULL)")
+                                 "`entity_type_de` TEXT NOT NULL, `readable_time` TEXT NOT NULL)")
 
     datas = db_handle.execute_sql("select * from echo_events;").fetchall()
 
@@ -130,7 +143,7 @@ def echo_db_handler(data_path):
 
         t = "'" + json.dumps(update_dict) + "'"
         t2 = "'" + t2 + "'"
-        ma_query = f"INSERT into echo_events_deserial values ({i[0]},{i[1]},{i[2]},{i[3]},{t},{t2})"
+        ma_query = f"INSERT into echo_events_deserial values ({i[0]},{i[1]},{i[2]},{i[3]},{t},{t2},{time_stamp_stuff(i[3])})"
 
         db_handle.execute_sql(ma_query)
 
@@ -143,10 +156,10 @@ def active_users_logger_handler(data_path):
     db_handle = db_handler(data_path)
     db_handle.execute_sql_commit("DROP TABLE IF EXISTS `active_users_logger_de`")
     db_handle.execute_sql_commit(
-        "CREATE TABLE active_users_logger_de (id INTEGER PRIMARY KEY AUTOINCREMENT,feature_id INTEGER NOT NULL,feature_event_type TEXT,feature_date TEXT,timestamp INTEGER, actions TEXT)")
+        "CREATE TABLE active_users_logger_de (id INTEGER PRIMARY KEY AUTOINCREMENT,feature_id INTEGER NOT NULL,feature_event_type TEXT,feature_date TEXT,timestamp INTEGER, actions TEXT, readable_time TEXT NOT NULL)")
     datas = db_handle.execute_sql("select * from active_users_logger where feature_event_type = 'USED';").fetchall()
     for i in datas:
-        ma_query = f"INSERT into active_users_logger_de values ({i[0]},{i[1]},'{i[2]}','{i[3]}',{i[4]},'{enum_specs.active_users_logger(i[1]).name}')"
+        ma_query = f"INSERT into active_users_logger_de values ({i[0]},{i[1]},'{i[2]}','{i[3]}',{i[4]},'{enum_specs.active_users_logger(i[1]).name}',{time_stamp_stuff(i[4])})"
         db_handle.execute_sql(ma_query)
 
     db_handle.conn.commit()
@@ -163,7 +176,7 @@ def people_search_handler(data_path):
     version_flag = 12
 
     search_query = "select i.id, i.name, i.entity_id, i.entity_type, e.blob from search_index as i, search_entity " \
-                       "as e where e.id = i.entity_id and e.type = 1 "
+                   "as e where e.id = i.entity_id and e.type = 1 "
 
     if "store_id" in version_str:  # this means a13 version up
         search_query = "select * from search_index where entity_type == 1;"
@@ -181,7 +194,7 @@ def people_search_handler(data_path):
         update_dict = dict()
 
         if version_flag == 12:
-            #a12
+            # a12
             for key in protobuf_dict.keys():
                 update_key = key
                 update_value = protobuf_dict[key]
@@ -228,17 +241,18 @@ def simple_storage_now_playing_recognition_handler(data_path):
     datas = db_handle.execute_sql("select * from NowPlayingRecognitionEvents;").fetchall()
 
     db_handle.execute_sql_commit("DROP TABLE IF EXISTS `NowPlayingRecognitionEvents_dec`")
-    db_handle.execute_sql_commit("CREATE TABLE `NowPlayingRecognitionEvents_dec` (`id` INTEGER PRIMARY KEY "
-                                 "AUTOINCREMENT NOT NULL, `timestampMillis` INTEGER NOT NULL, `countryCode` TEXT NOT "
-                                 "NULL, `shardVersion` INTEGER NOT NULL, `shardCountry` TEXT NOT NULL, `packageName` "
-                                 "TEXT NOT NULL, `systemInfoId` INTEGER, `recognitionResult` INTEGER NOT NULL, "
-                                 "`recognitionTrigger` INTEGER NOT NULL, `detectedMusicScore` REAL NOT NULL, "
-                                 "`comparisonToLastMatch` INTEGER NOT NULL, `recognitionResult_dec` TEXT , `recognitionTrigger_dec` TEXT , FOREIGN KEY(`packageName`) REFERENCES "
-                                 "`Packages`(`packageName`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY("
-                                 "`systemInfoId`) REFERENCES `SystemInfo`(`id`) ON UPDATE CASCADE ON DELETE SET NULL)")
+    create_context = "CREATE TABLE `NowPlayingRecognitionEvents_dec` (`id` INTEGER PRIMARY KEY "\
+                     "AUTOINCREMENT NOT NULL, `timestampMillis` INTEGER NOT NULL, `countryCode` TEXT NOT "\
+                     "NULL, `shardVersion` INTEGER NOT NULL, `shardCountry` TEXT NOT NULL, `packageName` "\
+                     "TEXT NOT NULL, `systemInfoId` INTEGER, `recognitionResult` INTEGER NOT NULL, "\
+                     "`recognitionTrigger` INTEGER NOT NULL, `detectedMusicScore` REAL NOT NULL, "\
+                     "`comparisonToLastMatch` INTEGER NOT NULL, `recognitionResult_dec` TEXT , `recognitionTrigger_dec` TEXT, `readable_time` TEXT NOT NULL , FOREIGN KEY(`packageName`) REFERENCES "\
+                     "`Packages`(`packageName`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY("\
+                     "`systemInfoId`) REFERENCES `SystemInfo`(`id`) ON UPDATE CASCADE ON DELETE SET NULL)"
+    db_handle.execute_sql_commit(create_context)
 
     for i in datas:
-        ma_query = f"INSERT into NowPlayingRecognitionEvents_dec values ({i[0]},{i[1]},'{i[2]}',{i[3]},'{i[4]}','{i[5]}',{i[6]},{i[7]},{i[8]},{i[9]},{i[10]},'{simple_storage_nowplayingrecognition_recognition_result(i[7]).name}','{simple_storage_nowplayingrecognition_recognition_trigger(i[8]).name}')"
+        ma_query = f"INSERT into NowPlayingRecognitionEvents_dec values ({i[0]},{i[1]},'{i[2]}',{i[3]},'{i[4]}','{i[5]}',{i[6]},{i[7]},{i[8]},{i[9]},{i[10]},'{simple_storage_nowplayingrecognition_recognition_result(i[7]).name}','{simple_storage_nowplayingrecognition_recognition_trigger(i[8]).name}',{time_stamp_stuff(i[1])})"
         db_handle.execute_sql(ma_query)
 
     db_handle.conn.commit()
@@ -253,7 +267,7 @@ def portable_geller_personalized_habits_handler(data_path):
     db_handle.execute_sql_commit(
         "CREATE TABLE geller_data_deserial (data_type TEXT NOT NULL, key TEXT NOT NULL, timestamp_micro INTEGER NOT "
         "NULL, sync_status TEXT, delete_status TEXT, num_times_used INTEGER, deletion_sync_status TEXT, "
-        "data_id INTEGER NOT NULL, data_deserial BLOB ,  FOREIGN KEY (data_id) REFERENCES geller_data_table (_id) ON "
+        "data_id INTEGER NOT NULL, data_deserial BLOB , readable_time TEXT NOT NULL ,FOREIGN KEY (data_id) REFERENCES geller_data_table (_id) ON "
         "DELETE CASCADE )")
 
     datas = db_handle.execute_sql(
@@ -282,7 +296,7 @@ def portable_geller_personalized_habits_handler(data_path):
         if type(i[6]) == type(None):
             flag2 = "Null"
 
-        ma_query = f"INSERT into geller_data_deserial values ('{i[0]}','{i[1]}',{i[2]},'{i[3]}','{flag1}',{i[5]},'{flag2}',{i[7]},'{json.dumps(update_val)}')"
+        ma_query = f"INSERT into geller_data_deserial values ('{i[0]}','{i[1]}',{i[2]},'{i[3]}','{flag1}',{i[5]},'{flag2}',{i[7]},'{json.dumps(update_val)}',{time_stamp_stuff(i[2])})"
         db_handle.execute_sql(ma_query)
     db_handle.conn.commit()
     db_handle.conn.close()
@@ -290,7 +304,6 @@ def portable_geller_personalized_habits_handler(data_path):
 
 
 if __name__ == '__main__':
-
     if len(sys.argv) < 2:
         print("usage : python asi_parser.py DATA_PATH")
         exit(-1)
@@ -315,7 +328,3 @@ if __name__ == '__main__':
             if file_name == enum_specs.ASI_DATA_LIST[4]:
                 portable_geller_personalized_habits_handler(target_path)
                 continue
-
-    #ex. file_path = ".\reflection_gel_events.db"
-    # reflection_gel_handler(file_path)
-    # print("-----ASI deserial or decoding done!-----")
